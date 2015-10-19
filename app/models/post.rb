@@ -4,7 +4,7 @@ class Post < ActiveRecord::Base
 
   def self.with_total_points
     Post.find_by_sql("""
-      SELECT posts.*, IFNULL(points_per_post.points, 0) as total_points
+      SELECT posts.*, coalesce(points_per_post.points, 0) as total_points
         FROM posts LEFT JOIN (
           SELECT post_id, SUM(points) as points
             FROM (
@@ -14,8 +14,8 @@ class Post < ActiveRecord::Base
                   else #{Setting.points_per_downvote}
                 end as points
               FROM LIKES AS l
-            ) GROUP BY post_id
-        ) as points_per_post
+            ) AS points_per_like GROUP BY post_id
+        ) AS points_per_post
         ON posts.id = points_per_post.post_id
       ORDER BY total_points DESC;
     """)
